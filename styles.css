@@ -109,6 +109,26 @@ body { background:linear-gradient(135deg,#fff5e8 0%,#edf7f1 48%,#f4efff 100%); }
 .category-bars { min-width:0; }.chart-label { margin:0 0 12px; color:var(--muted); font-size:11px; font-weight:700; }.category-bar { margin:0 0 12px; }.category-bar > div:first-child { display:flex; justify-content:space-between; gap:12px; font-size:11px; margin-bottom:5px; }.category-bar strong { color:var(--violet); white-space:nowrap; }.category-bar-track { height:9px; border-radius:99px; background:rgba(117,103,200,.14); overflow:hidden; }.category-bar-track b { display:block; height:100%; border-radius:inherit; }
 .dark-mode .category-bar-track { background:#3a3c55; }.dark-mode .chart-label { color:#d0ccdf; }
 @media (max-width:700px) { .stats-visuals { grid-template-columns:1fr; gap:24px; }.stats-pie-side { justify-content:center; }.stats-pie-side .pie-chart { flex-basis:118px; width:118px; height:118px; }.stats-pie-side .pie-hole { width:65px; height:65px; } }
+
+/* Dark-mode readability: light gradient cards must keep dark ink, while dark utility surfaces use light ink. */
+.dark-mode .summary-card:not(.highlight) { color:#20243a; }
+.dark-mode .summary-card:not(.highlight) .summary-label { color:#596070; }
+.dark-mode .summary-card:not(.highlight) .summary-value { color:#20243a; }
+.dark-mode .summary-card:not(.highlight) .summary-sub { color:#687080; }
+.dark-mode .summary-card.highlight { color:#fff; }
+.dark-mode .summary-card.highlight .summary-label,.dark-mode .summary-card.highlight .summary-sub { color:#edf5f0; }
+.dark-mode .expense-title,.dark-mode .expense-amount,.dark-mode .member-info,.dark-mode .day-detail-title,.dark-mode .day-expense { color:#f7f4ed; }
+.dark-mode .expense-meta,.dark-mode .expense-currency,.dark-mode .day-expense small,.dark-mode .muted-text { color:#c6c5d6; }
+.dark-mode .split-info,.dark-mode .expense-twd { color:#c8bfff; }
+.dark-mode .rate-panel .rate-copy h2,.dark-mode .stats-heading h2,.dark-mode .chart-label { color:#f7f4ed; }
+.dark-mode .mid-settlement-heading,.dark-mode .settlement-panel > #settlementText::before { color:#e2ddff; }
+.dark-mode .mid-settlement-row { background:rgba(255,255,255,.08); color:#f7f4ed; }
+.dark-mode .mid-settlement-row strong,.dark-mode .settlement-panel .transfer-row strong { color:#c8bfff; }
+.dark-mode .stats-panel .category-bar > div:first-child,.dark-mode .pie-legend > div { color:#f7f4ed; }
+.dark-mode .stats-panel .category-bar strong,.dark-mode .pie-legend strong { color:#c8bfff; }
+.dark-mode .rate-editor input,.dark-mode .expense-filters input,.dark-mode .expense-filters select { color:#f7f4ed; background:#292b43; }
+.dark-mode .button-secondary { color:#2c2750; background:#e5e0ff; border-color:#9d94e8; }
+.dark-mode .button-secondary:hover { background:#f2efff; }
 .settlement-panel > #settlementText { margin:0; padding:16px; min-height:132px; background:rgba(255,255,255,.52); border:1px solid rgba(117,103,200,.12); border-radius:14px; }
 .settlement-panel > #settlementText::before { content:"建議轉帳明細"; display:block; margin-bottom:8px; color:var(--violet); font-size:11px; font-weight:800; letter-spacing:.08em; }
 .settlement-panel .transfer-list { gap:0; }.settlement-panel .transfer-row { max-width:none; padding:9px 0; border-bottom:1px solid rgba(117,103,200,.12); }.settlement-panel .transfer-row:last-child { border-bottom:0; }.settlement-panel .transfer-row strong { text-align:right; }

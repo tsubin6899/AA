@@ -48,6 +48,12 @@ button { cursor:pointer; }
 .member-spending-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }.member-spending-list .spending-title { grid-column:1 / -1; }.member-spending-list .spending-row { border-bottom:1px solid rgba(117,103,200,.1); }.member-spending-list .spending-row:nth-last-child(-n+2) { border-bottom:0; }
 .avatar.person { position:relative; font-size:0 !important; overflow:visible; }.avatar.person::before { content:''; position:absolute; width:9px; height:9px; border-radius:50%; background:#fff; top:5px; left:50%; transform:translateX(-50%); }.avatar.person::after { content:''; position:absolute; width:17px; height:10px; border-radius:10px 10px 5px 5px; background:#fff; bottom:4px; left:50%; transform:translateX(-50%); }
 @media (max-width:700px) { .member-spending-list { grid-template-columns:1fr; }.member-spending-list .spending-title { grid-column:auto; }.member-spending-list .spending-row:nth-last-child(-n+2) { border-bottom:1px solid rgba(117,103,200,.1); }.member-spending-list .spending-row:last-child { border-bottom:0; } }
+
+/* Keep long trip forms usable on smaller screens. */
+.modal { max-height:calc(100vh - 40px); overflow:hidden; display:flex; flex-direction:column; }
+.modal form { min-height:0; overflow-y:auto; overflow-x:hidden; padding:2px 5px 2px 0; scrollbar-width:thin; }
+.modal .form-actions { position:sticky; bottom:0; background:var(--panel); padding:12px 0 2px; z-index:1; }
+@media (max-width:580px) { .modal { max-height:calc(100vh - 24px); }.modal form { padding-right:2px; } }
 .currency-edit-button { display:block; margin-top:12px; border:0; border-radius:6px; padding:7px 9px; background:#eeeaff; color:var(--violet); font-size:10px; cursor:pointer; }.currency-edit-button:hover { background:#ded6ff; }
 .stats-panel { margin-top:26px; }.rate-input.fixed-rate { opacity:.7; }.rate-input.fixed-rate input { background:rgba(117,103,200,.08); color:var(--muted); cursor:not-allowed; }
 .main-grid { display:flex; flex-direction:column; gap:24px; }.calendar-panel,.ledger-panel { width:100%; }.expense-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:28px; }.expense-list .empty-list { grid-column:1 / -1; }.calendar-panel { order:-1; }

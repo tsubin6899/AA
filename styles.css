@@ -83,6 +83,8 @@ body { background:linear-gradient(135deg,#fff5e8 0%,#edf7f1 48%,#f4efff 100%); }
 @media (max-width:580px) { .calendar-cell { min-height:45px; padding:5px; }.calendar-cell.selected { padding:4px; }.calendar-cell.has-expense small { font-size:9px; }.split-choice { grid-template-columns:1fr; } }
 .topbar-actions #authButton { min-width:0; }
 @media (max-width:580px) { .topbar { height:auto; display:flex; flex-direction:column; align-items:stretch; gap:10px; padding:12px 0; }.brand { width:100%; min-width:0; white-space:nowrap; flex:0 0 auto; }.topbar-actions { width:100%; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:7px; align-items:center; }.topbar-actions .viewer-switcher { min-width:0; white-space:nowrap; }.topbar-actions .viewer-switcher select { max-width:108px; }.topbar-actions .local-badge { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; }.topbar-actions .local-badge::after { content:none; }.topbar-actions #authButton { max-width:128px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.workspace-grid { display:flex; flex-direction:column; }.content-column { order:1; }.sidebar { order:2; margin-top:24px; } }
+.hero-compact-note { display:none; }
+@media (max-width:580px) { .hero { display:block; padding:16px 0 14px; }.hero .eyebrow,.hero .hero-copy,.hero .hero-note { display:none; }.hero h1 { margin:0; font-size:30px; line-height:1.12; letter-spacing:-.08em; white-space:nowrap; } }
 .topbar-actions #authButton { display:inline-flex; white-space:nowrap; }
 @media (max-width:580px) { .topbar-actions #authButton { display:inline-flex; padding:8px 10px; font-size:11px; } }
 

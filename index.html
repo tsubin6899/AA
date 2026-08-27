@@ -22,6 +22,7 @@
             <select id="viewerSelect" aria-label="切換檢視身份"></select>
           </label>
           <span class="local-badge"><span class="status-dot"></span>資料儲存在此裝置</span>
+          <button class="button button-ghost" id="authButton" type="button">登入同步</button>
           <button class="button button-ghost" id="themeToggle" type="button">☾ 深色</button>
           <button class="button button-ghost" id="exportData" type="button">匯出資料</button>
           <button class="button button-ghost" id="importData" type="button">匯入資料</button>
@@ -123,6 +124,7 @@
       </div>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260827-20"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js?v=20260827-21"></script>
   </body>
 </html>

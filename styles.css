@@ -96,4 +96,8 @@ body { background:linear-gradient(135deg,#fff5e8 0%,#edf7f1 48%,#f4efff 100%); }
 .dark-mode .field select option { background:#292b43; color:#f7f4ed; }
 .dark-mode .rate-input { color:#eeeaf8; }
 .dark-mode .day-expense,.dark-mode .expense-row { border-color:#3a3c55; }
+.heading-icon { display:inline-grid; place-items:center; width:23px; height:23px; margin-right:7px; border-radius:7px; background:linear-gradient(135deg,#ffe0d7,#e5e0ff); font-size:14px; vertical-align:-4px; line-height:1; }
+.field > label .heading-icon { width:19px; height:19px; margin-right:5px; border-radius:6px; font-size:12px; vertical-align:-3px; }
+.summary-label .heading-icon { width:18px; height:18px; margin-right:5px; border-radius:5px; font-size:11px; vertical-align:-3px; }
+.dark-mode .heading-icon { background:linear-gradient(135deg,#514464,#334b51); }
 @media (max-width:700px) { .expense-list { grid-template-columns:1fr; }.expense-list .empty-list { grid-column:auto; } }

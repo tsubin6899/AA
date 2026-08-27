@@ -58,6 +58,14 @@ button { cursor:pointer; }
 .button-danger { border:1px solid #f0b1a7; color:#b34f45; background:#fff0ed; }.button-danger:hover { background:#ffdcd5; }
 .members-footer { display:flex; flex-wrap:wrap; gap:8px; }
 .trip-flag { display:inline-block; min-width:1.25em; margin-right:3px; font-family:"Segoe UI Emoji","Noto Color Emoji","Apple Color Emoji",sans-serif; font-size:1.15em; line-height:1; }
+.flag-icon { display:inline-block; width:27px; height:19px; vertical-align:-3px; position:relative; overflow:hidden; border-radius:3px; box-shadow:0 0 0 1px rgba(30,35,35,.16); background:#d9d9d9; }
+.flag-icon.flag-tw { background:#e21b23; }.flag-icon.flag-tw::before { content:""; position:absolute; left:0; top:0; width:12px; height:10px; background:#172b85; }.flag-icon.flag-tw::after { content:"☆"; position:absolute; left:2px; top:-2px; color:#fff; font-size:10px; }
+.flag-icon.flag-jp { background:#fff; }.flag-icon.flag-jp::after { content:""; position:absolute; width:10px; height:10px; border-radius:50%; background:#bc002d; left:9px; top:4px; }
+.flag-icon.flag-us { background:repeating-linear-gradient(to bottom,#b22234 0 2px,#fff 2px 4px); }.flag-icon.flag-us::before { content:""; position:absolute; left:0; top:0; width:12px; height:10px; background:#3c3b6e; }
+.flag-icon.flag-tr { background:#e30a17; }.flag-icon.flag-tr::after { content:"☾"; position:absolute; color:#fff; left:8px; top:-3px; font-size:18px; }
+.flag-icon.flag-kr { background:#fff; }.flag-icon.flag-kr::after { content:"☯"; position:absolute; left:8px; top:-3px; color:#c8102e; font-size:15px; }
+.flag-icon.flag-th { background:linear-gradient(#a51931 0 20%,#fff 20% 35%,#2d2a4a 35% 65%,#fff 65% 80%,#a51931 80%); }
+.flag-icon.flag-gb { background:#1f3c88; }.flag-icon.flag-fr { background:linear-gradient(90deg,#0055a4 0 33%,#fff 33% 66%,#ef4135 66%); }.flag-icon.flag-it { background:linear-gradient(90deg,#009246 0 33%,#fff 33% 66%,#ce2b37 66%); }.flag-icon.flag-es { background:linear-gradient(#aa151b 0 25%,#f1bf00 25% 75%,#aa151b 75%); }.flag-icon.flag-au,.flag-icon.flag-ca,.flag-icon.flag-sg,.flag-icon.flag-vn,.flag-icon.flag-eu,.flag-icon.flag-world { background:linear-gradient(135deg,#7567c8,#4a9cc5); }
 .stats-panel { margin-top:26px; }.rate-input.fixed-rate { opacity:.7; }.rate-input.fixed-rate input { background:rgba(117,103,200,.08); color:var(--muted); cursor:not-allowed; }
 .main-grid { display:flex; flex-direction:column; gap:24px; }.calendar-panel,.ledger-panel { width:100%; }.expense-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:28px; }.expense-list .empty-list { grid-column:1 / -1; }.calendar-panel { order:-1; }
 .main-grid .ledger-panel { order:-1; }.main-grid .calendar-panel { order:0; }

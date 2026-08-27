@@ -55,6 +55,9 @@ button { cursor:pointer; }
 .modal .form-actions { position:sticky; bottom:0; background:var(--panel); padding:12px 0 2px; z-index:1; }
 @media (max-width:580px) { .modal { max-height:calc(100vh - 24px); }.modal form { padding-right:2px; } }
 .currency-edit-button { display:block; margin-top:12px; border:0; border-radius:6px; padding:7px 9px; background:#eeeaff; color:var(--violet); font-size:10px; cursor:pointer; }.currency-edit-button:hover { background:#ded6ff; }
+.button-danger { border:1px solid #f0b1a7; color:#b34f45; background:#fff0ed; }.button-danger:hover { background:#ffdcd5; }
+.members-footer { display:flex; flex-wrap:wrap; gap:8px; }
+.trip-flag { display:inline-block; min-width:1.25em; margin-right:3px; font-family:"Segoe UI Emoji","Noto Color Emoji","Apple Color Emoji",sans-serif; font-size:1.15em; line-height:1; }
 .stats-panel { margin-top:26px; }.rate-input.fixed-rate { opacity:.7; }.rate-input.fixed-rate input { background:rgba(117,103,200,.08); color:var(--muted); cursor:not-allowed; }
 .main-grid { display:flex; flex-direction:column; gap:24px; }.calendar-panel,.ledger-panel { width:100%; }.expense-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:28px; }.expense-list .empty-list { grid-column:1 / -1; }.calendar-panel { order:-1; }
 .main-grid .ledger-panel { order:-1; }.main-grid .calendar-panel { order:0; }

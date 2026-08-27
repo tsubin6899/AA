@@ -123,6 +123,44 @@ function cloudStatus(text){const el=document.querySelector('.local-badge');if(el
 function updateAuthButton(){const b=$('#authButton');if(!b)return;b.textContent=cloudUser?'登出 '+(cloudUser.email||'帳號'):'登入同步';cloudStatus(cloudUser?'已連線雲端':'資料儲存在此裝置')}
 async function loadCloudWorkspace(){if(!cloudClient||!cloudUser)return;const {data:row,error}=await cloudClient.from('travel_workspaces').select('payload').eq('owner_id',cloudUser.id).maybeSingle();if(error){cloudStatus('雲端尚未設定');return}if(row?.payload?.trips){data=row.payload;normalize();localStorage.setItem(STORAGE_KEY,JSON.stringify(data));render();toast('已載入雲端資料')}else{await cloudClient.from('travel_workspaces').upsert({owner_id:cloudUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'owner_id'});toast('已建立雲端資料')}}
 function queueCloudSave(){if(!cloudClient||!cloudUser)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(async()=>{const result=await cloudClient.from('travel_workspaces').upsert({owner_id:cloudUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'owner_id'});if(result.error)cloudStatus('雲端同步失敗')},500)}
-async function cloudLogin(){if(!cloudClient)return toast('雲端服務尚未載入');const email=prompt('請輸入 Email');if(!email)return;const password=prompt('請輸入密碼（至少 6 碼）');if(!password)return;let result=await cloudClient.auth.signInWithPassword({email,password});if(result.error)result=await cloudClient.auth.signUp({email,password});if(result.error){toast('登入失敗：'+result.error.message);return}cloudUser=result.data.user;updateAuthButton();await loadCloudWorkspace();toast('登入成功')}
+async function cloudLogin(){if(!cloudClient)return toast('雲端服務尚未載入');const email=prompt('請輸入 Email');if(!email)return;const password=prompt('請輸入密碼（至少 6 碼）');if(!password)return;let result=await cloudClient.auth.signInWithPassword({email,password});if(result.error)result=await cloudClient.auth.signUp({email,password});if(result.error){toast('登入失敗：'+result.error.message);return}cloudUser=result.data.user;updateAuthButton();await loadCloudWorkspace();await redeemPendingInvite();toast('登入成功')}
 async function initCloud(){if(!window.supabase?.createClient){cloudStatus('本機模式');return}cloudClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const session=await cloudClient.auth.getSession();cloudUser=session.data.session?.user||null;updateAuthButton();if(cloudUser)await loadCloudWorkspace();cloudClient.auth.onAuthStateChange((event,session)=>{cloudUser=session?.user||null;updateAuthButton()})}
 $('#authButton')?.addEventListener('click',async()=>{if(cloudUser){await cloudClient.auth.signOut();cloudUser=null;updateAuthButton();toast('已登出，改用本機資料')}else await cloudLogin()});initCloud();
+
+// Invite flow: each link contains one trip only. The recipient must be authenticated.
+let pendingInviteCode=new URLSearchParams(location.search).get('invite');
+function openInviteDialog(link){
+  modalMode='invite';
+  $('#modalBackdrop').classList.remove('hidden');
+  $('#modalKicker').textContent='INVITE TRAVEL MATES';
+  $('#modalTitle').textContent='邀請成員加入這趟旅行';
+  $('#modalForm').innerHTML=`<div class="field"><label>邀請連結</label><input id="inviteLink" value="${esc(link)}" readonly></div><p class="field-hint">把這個連結傳給旅伴；對方登入後即可加入這趟旅行。</p><div class="form-actions"><button class="button button-secondary" id="copyInviteLink" type="button">複製連結</button><button class="button button-primary" id="closeInvite" type="button">完成</button></div>`;
+  $('#copyInviteLink').onclick=async()=>{try{await navigator.clipboard.writeText(link);toast('邀請連結已複製')}catch{const input=$('#inviteLink');input.select();document.execCommand('copy');toast('邀請連結已複製')}};
+  $('#closeInvite').onclick=closeModal;
+}
+async function createTravelInvite(){
+  if(!cloudUser){toast('請先登入同步，再邀請其他人');return}
+  const t=activeTrip();if(!t)return;
+  const result=await cloudClient.from('travel_invites').insert({owner_id:cloudUser.id,trip_name:t.name,trip_payload:structuredClone(t)}).select('code').single();
+  if(result.error){toast('邀請連結建立失敗：請先執行新版 Supabase SQL');return}
+  const link=`${location.origin}${location.pathname}?invite=${encodeURIComponent(result.data.code)}`;
+  openInviteDialog(link);
+}
+async function redeemPendingInvite(){
+  if(!pendingInviteCode||!cloudClient||!cloudUser)return;
+  const code=pendingInviteCode;pendingInviteCode=null;
+  const result=await cloudClient.rpc('redeem_travel_invite',{p_code:code});
+  history.replaceState({},document.title,location.pathname+location.hash);
+  if(result.error){toast(result.error.message||'邀請連結無效');return}
+  const source=result.data?.trip;
+  if(!source?.name||!Array.isArray(source.members)){toast('邀請資料格式不正確');return}
+  const memberName=prompt('請輸入你在這趟旅行中的名稱');
+  if(!memberName?.trim())return;
+  const copy=structuredClone(source),memberId=`user-${cloudUser.id}`;
+  copy.id=`invite-${Date.now()}`;copy.name=copy.name||result.data.trip_name;copy.members=copy.members.filter(m=>m.id!==memberId);copy.members.push({id:memberId,name:memberName.trim()});
+  data.trips.push(copy);data.activeTripId=copy.id;save();render();toast('已加入旅行：'+copy.name);
+}
+$('#inviteTrip')?.addEventListener('click',createTravelInvite);
+const originalInitCloud=initCloud;
+initCloud=async()=>{await originalInitCloud();if(cloudUser)await redeemPendingInvite()};
+initCloud();

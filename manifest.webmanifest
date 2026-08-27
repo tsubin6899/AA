@@ -1,0 +1,12 @@
+{
+  "name": "旅伴分帳",
+  "short_name": "旅伴分帳",
+  "description": "旅行支出與分帳管理工具",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#7567c8",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

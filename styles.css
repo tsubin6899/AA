@@ -81,4 +81,19 @@ body { background:linear-gradient(135deg,#fff5e8 0%,#edf7f1 48%,#f4efff 100%); }
 .calendar { grid-template-columns:repeat(7,1fr); gap:6px; }.calendar-weekday { color:var(--violet); text-align:center; font-size:11px; font-weight:800; padding:3px 0 7px; }.calendar-cell { min-height:55px; border:1px solid rgba(117,103,200,.12); border-radius:8px; background:rgba(255,255,255,.74); color:var(--ink); padding:7px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; }.calendar-cell:hover { border-color:var(--coral); background:#fff1e9; }.calendar-cell.blank { background:transparent; border-color:transparent; }.calendar-cell.selected { border:2px solid var(--violet); background:#e6e0ff; padding:6px; }.calendar-cell.has-expense small { color:var(--coral); font-size:10px; font-weight:800; overflow:hidden; text-overflow:ellipsis; }.calendar-cell > span { font-size:12px; font-weight:800; }.day-detail { background:rgba(255,255,255,.75); border-radius:9px; padding:13px; margin-top:15px; min-height:58px; color:var(--muted); font-size:12px; }.day-detail-title { color:var(--ink); display:flex; justify-content:space-between; margin-bottom:8px; }.day-detail-title strong { color:var(--violet); }.day-expense { display:flex; justify-content:space-between; border-top:1px solid rgba(117,103,200,.12); padding:8px 0 0; margin-top:7px; color:var(--ink); }.day-expense strong { color:var(--coral); }.muted-text { font-size:11px; }
 .split-choice { display:grid; grid-template-columns:1fr 1fr; gap:8px; }.split-choice label { border:1px solid var(--line); border-radius:7px; padding:11px; font-size:12px; background:#fff; }.split-choice label:has(input:checked) { border-color:var(--violet); background:#eeeaff; color:#4b4389; }.split-choice input { accent-color:var(--violet); margin-right:6px; }
 @media (max-width:580px) { .calendar-cell { min-height:45px; padding:5px; }.calendar-cell.selected { padding:4px; }.calendar-cell.has-expense small { font-size:9px; }.split-choice { grid-template-columns:1fr; } }
+
+/* Dark-mode contrast fixes for controls and light utility surfaces. */
+.dark-mode .button-ghost { color:#d8d4ff; border-color:#555875; background:rgba(255,255,255,.04); }
+.dark-mode .button-ghost:hover { background:rgba(255,255,255,.1); }
+.dark-mode .button-danger { color:#ffc4bb; border-color:#854c55; background:#422b38; }
+.dark-mode .count-pill { background:#343750; color:#ddd9f1; }
+.dark-mode .trip-item:hover { background:#30334b; }
+.dark-mode .currency-check,.dark-mode .split-choice label { background:#292b43; color:#eeeaf8; border-color:#4b4e6b; }
+.dark-mode .currency-check:has(input:checked),.dark-mode .split-choice label:has(input:checked) { background:#3d3867; color:#fff; border-color:#9187e8; }
+.dark-mode .currency-check.fixed-currency { color:#d5d1e7; }
+.dark-mode .member-name-input { background:#292b43; color:var(--ink); border-color:#555875; }
+.dark-mode .field input,.dark-mode .field select { border-color:#555875; }
+.dark-mode .field select option { background:#292b43; color:#f7f4ed; }
+.dark-mode .rate-input { color:#eeeaf8; }
+.dark-mode .day-expense,.dark-mode .expense-row { border-color:#3a3c55; }
 @media (max-width:700px) { .expense-list { grid-template-columns:1fr; }.expense-list .empty-list { grid-column:auto; } }

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f1e8" />
+    <title>旅伴分帳｜簡單記，清楚算</title>
+    <link rel="stylesheet" href="styles.css?v=20260827-3" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="旅伴分帳首頁">
+          <span class="brand-mark">↗</span>
+          <span>旅伴分帳</span>
+        </a>
+        <div class="topbar-actions">
+          <label class="viewer-switcher">檢視身份
+            <select id="viewerSelect" aria-label="切換檢視身份"></select>
+          </label>
+          <span class="local-badge"><span class="status-dot"></span>資料儲存在此裝置</span>
+          <button class="button button-ghost" id="themeToggle" type="button">☾ 深色</button>
+          <button class="button button-ghost" id="exportData" type="button">匯出資料</button>
+          <button class="button button-ghost" id="importData" type="button">匯入資料</button>
+          <input id="importFile" type="file" accept="application/json" hidden>
+          <button class="button button-ghost" id="resetData" type="button">重設示範資料</button>
+        </div>
+      </header>
+
+      <main id="top">
+        <section class="hero">
+          <div>
+            <p class="eyebrow">TRAVEL EXPENSES, UNTANGLED</p>
+            <h1>一起走，<em>好好算。</em></h1>
+            <p class="hero-copy">每趟旅程獨立管理，成員隨時變更。只記文字與金額，讓分帳保持清爽。</p>
+          </div>
+          <div class="hero-note">
+            <span class="note-line"></span>
+            <span>支出透明，旅程更輕鬆</span>
+          </div>
+        </section>
+
+        <section class="workspace-grid">
+          <aside class="sidebar panel">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">MY TRIPS</p>
+                <h2>我的旅行</h2>
+              </div>
+              <button class="icon-button" id="openTripModal" type="button" aria-label="新增旅行">＋</button>
+            </div>
+            <div id="tripList" class="trip-list"></div>
+            <div class="sidebar-footer"><span class="tiny-dot"></span>純文字資料，沒有附件</div>
+          </aside>
+
+          <section class="content-column">
+            <div id="emptyState" class="empty-state panel hidden">
+              <span class="empty-icon">✦</span>
+              <h2>先建立一趟旅行吧</h2>
+              <p>建立後就能加入成員與記錄支出。</p>
+              <button class="button button-primary" id="emptyCreateTrip" type="button">建立第一趟旅行</button>
+            </div>
+
+            <div id="tripContent">
+              <div class="trip-header">
+                <div>
+                  <p class="section-kicker" id="tripDates">TRIP · 2026</p>
+                  <h2 id="tripTitle">東京慢遊</h2>
+                </div>
+                <div class="trip-actions"><button class="button button-ghost" id="editTrip" type="button">旅行設定</button><button class="button button-primary" id="openExpenseModal" type="button"><span>＋</span> 新增支出</button></div>
+              </div>
+
+              <div class="summary-grid" id="summaryGrid"></div>
+
+              <div class="main-grid">
+                <section class="panel ledger-panel">
+                  <div class="section-heading compact">
+                    <div><p class="section-kicker">RECENT ACTIVITY</p><h2>最近支出</h2></div>
+                    <span class="count-pill" id="expenseCount">0 筆</span>
+                  </div>
+                  <div class="expense-filters"><input id="expenseSearch" placeholder="搜尋支出名稱、付款人或分類"><select id="expenseCategoryFilter"><option value="">全部分類</option><option>餐飲</option><option>交通</option><option>住宿</option><option>娛樂</option><option>購物</option><option>刷卡手續費</option><option>其他</option></select></div>
+                  <div id="expenseList" class="expense-list"></div>
+                </section>
+
+                <section class="panel calendar-panel">
+                  <div class="section-heading compact"><div><p class="section-kicker">DAILY VIEW</p><h2>每日花費</h2></div><span class="count-pill" id="calendarMonth">2026</span></div>
+                  <div id="calendar" class="calendar"></div>
+                  <div id="dayDetail" class="day-detail">點選日期查看當日消費。</div>
+                </section>
+              </div>
+              <section class="panel settlement-panel">
+                <div class="section-heading compact"><div><p class="section-kicker">SETTLEMENT</p><h2>建議結算</h2></div><span class="spark">✦</span></div>
+                <p id="settlementText">新增支出後，這裡會整理最少轉帳方式。</p>
+                <div class="mid-settlement-heading"><span>中途結算</span><button class="button button-secondary" id="openMidSettlement" type="button">＋ 記錄轉帳</button></div>
+                <div id="midSettlementList" class="mid-settlement-list"></div>
+              </section>
+              <section class="panel stats-panel" id="statsPanel"></section>
+              <section class="panel rate-panel">
+                <div class="rate-copy"><p class="section-kicker">EXCHANGE RATE</p><h2>匯率換算</h2><span>所有分帳最後以台幣結算，支出沿用這裡的匯率</span></div>
+                <div class="rate-editor" id="ratesList"></div><button class="button button-secondary" id="saveRate" type="button">更新匯率</button>
+              </section>
+              <section class="panel members-panel">
+                <div class="section-heading compact"><div><p class="section-kicker">THE CREW</p><h2>旅行成員</h2></div><button class="icon-button small" id="openMemberModal" type="button" aria-label="新增成員">＋</button></div>
+                <div id="memberList" class="member-list"></div>
+                <div id="memberSpendingList" class="member-spending-list"></div>
+                <div class="members-footer"><button class="button button-ghost" id="copyTrip" type="button">複製這趟旅行</button></div>
+              </section>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop hidden" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="modal-close" id="closeModal" type="button" aria-label="關閉">×</button>
+        <p class="section-kicker" id="modalKicker">NEW</p>
+        <h2 id="modalTitle">新增旅行</h2>
+        <form id="modalForm"></form>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js?v=20260827-3"></script>
+  </body>
+</html>

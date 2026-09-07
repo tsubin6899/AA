@@ -164,3 +164,107 @@ $('#inviteTrip')?.addEventListener('click',createTravelInvite);
 const originalInitCloud=initCloud;
 initCloud=async()=>{await originalInitCloud();if(cloudUser)await redeemPendingInvite()};
 initCloud();
+
+// Shared trips: one cloud record per trip, protected by Supabase membership rules.
+// This replaces the old invite-copy flow while retaining each account's private backup.
+const legacyVisibleTrips=visibleTrips;
+let sharedHydrating=false,sharedSaving=false,sharedTimer=null,sharedChannel=null,sharedPoll=null;
+function sharedTripPayload(t){const copy=structuredClone(t);delete copy.sharedId;delete copy.sharedOwnerId;delete copy.sharedUpdatedAt;delete copy.sharedRevision;delete copy.sharedFingerprint;return copy}
+function sharedFingerprint(t){return JSON.stringify(sharedTripPayload(t))}
+function isSharedOwner(t){return !cloudUser||!t.sharedOwnerId||t.sharedOwnerId===cloudUser.id}
+visibleTrips=()=>cloudUser?data.trips:legacyVisibleTrips();
+async function createOrUpdateSharedTrip(t){
+  if(!cloudClient||!cloudUser||!t)return null;
+  const payload=sharedTripPayload(t),fingerprint=JSON.stringify(payload);
+  if(!t.sharedId){
+    const ownerMember=t.members.find(m=>m.id===data.ownerId)||t.members[0];
+    const result=await cloudClient.rpc('create_shared_trip',{p_client_trip_id:t.id,p_payload:payload,p_owner_member_id:ownerMember?.id||data.ownerId});
+    if(result.error){toast('旅行雲端建立失敗：請執行新版 Supabase SQL');return null}
+    t.sharedId=result.data;t.sharedOwnerId=cloudUser.id;t.sharedUpdatedAt=null;t.sharedFingerprint=fingerprint;return t.sharedId;
+  }
+  if(t.sharedFingerprint===fingerprint)return t.sharedId;
+  const result=await cloudClient.rpc('update_shared_trip',{p_trip_id:t.sharedId,p_payload:payload,p_expected_revision:Number(t.sharedRevision||1)});
+  if(result.error||!result.data){
+    toast('旅伴剛更新資料，已重新載入最新內容');await hydrateSharedTrips();return null;
+  }
+  t.sharedRevision=Number(result.data);t.sharedFingerprint=fingerprint;return t.sharedId;
+}
+async function migrateLocalTripsToShared(){
+  if(!cloudClient||!cloudUser)return;
+  for(const t of data.trips){if(!t.sharedId&&!t.isSharedCopy&&!t.inviteOwnerId)await createOrUpdateSharedTrip(t)}
+}
+async function fetchSharedTrips(){
+  const result=await cloudClient.from('travel_shared_trips').select('id,owner_id,payload,updated_at,revision').order('updated_at',{ascending:false});
+  if(result.error){cloudStatus('共享旅行尚未設定');return null}
+  return result.data||[];
+}
+async function hydrateSharedTrips(){
+  if(sharedHydrating||!cloudClient||!cloudUser)return;
+  sharedHydrating=true;
+  try{
+    const rows=await fetchSharedTrips();if(!rows)return;
+    const trips=rows.filter(r=>r.payload?.name).map(r=>{const t=structuredClone(r.payload);t.sharedId=r.id;t.sharedOwnerId=r.owner_id;t.sharedUpdatedAt=r.updated_at;t.sharedRevision=Number(r.revision||1);t.sharedFingerprint=sharedFingerprint(t);return t});
+    if(trips.length||!data.trips.length){data.trips=trips;data.viewerId='owner';if(!trips.some(t=>t.id===data.activeTripId))data.activeTripId=trips[0]?.id||null;normalize();localStorage.setItem(STORAGE_KEY,JSON.stringify(data));render()}
+  }finally{sharedHydrating=false}
+}
+async function loadSharedWorkspace(){
+  if(!cloudClient||!cloudUser)return;
+  const privateRow=await cloudClient.from('travel_workspaces').select('payload').eq('owner_id',cloudUser.id).maybeSingle();
+  if(privateRow.data?.payload?.trips){data=privateRow.data.payload;normalize()}
+  else if(data.trips?.length===1&&data.trips[0]?.id==='tokyo')data={ownerId:'m1',viewerId:'owner',activeTripId:null,trips:[]};
+  await migrateLocalTripsToShared();
+  await hydrateSharedTrips();
+  cloudStatus('已連線共享旅行');
+}
+function queueSharedSave(){
+  if(sharedHydrating||!cloudClient||!cloudUser)return;
+  clearTimeout(sharedTimer);sharedTimer=setTimeout(async()=>{
+    if(sharedSaving)return;sharedSaving=true;
+    try{await createOrUpdateSharedTrip(activeTrip())}finally{sharedSaving=false}
+  },450);
+}
+async function savePrivateBackup(){
+  if(!cloudClient||!cloudUser)return;
+  const result=await cloudClient.from('travel_workspaces').upsert({owner_id:cloudUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'owner_id'});
+  if(result.error)cloudStatus('雲端同步失敗');
+}
+loadCloudWorkspace=loadSharedWorkspace;
+queueCloudSave=()=>{if(!cloudClient||!cloudUser)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(savePrivateBackup,650);queueSharedSave()};
+function applySharedPermissions(){
+  if(!cloudUser)return;
+  const t=activeTrip(),owner=t&&isSharedOwner(t);
+  const viewer=$('#viewerSelect');if(viewer){viewer.innerHTML='<option>我的帳號</option>';viewer.disabled=true;viewer.closest('.viewer-switcher')?.classList.add('cloud-viewer')}
+  ['editTrip','inviteTrip','copyTrip','deleteTrip','openMemberModal'].forEach(id=>{const b=$('#'+id);if(b){b.disabled=!owner;b.hidden=!owner}});
+  document.querySelectorAll('.member-actions').forEach(x=>{if(!owner)x.hidden=true});
+}
+const sharedPermissionRender=render;render=()=>{sharedPermissionRender();applySharedPermissions()};
+async function openSharedInvite(){
+  if(!cloudUser){toast('請先登入同步，再邀請其他人');return}
+  const t=activeTrip();if(!t||!isSharedOwner(t)){toast('只有旅行管理者可以邀請成員');return}
+  await createOrUpdateSharedTrip(t);if(!t.sharedId)return;
+  const targets=t.members.filter(m=>m.id!==data.ownerId);
+  if(!targets.length){toast('請先在旅行成員中新增朋友，再建立邀請');return}
+  modalMode='sharedInvite';$('#modalBackdrop').classList.remove('hidden');$('#modalKicker').textContent='INVITE TRAVEL MATE';$('#modalTitle').textContent='邀請朋友加入共享旅行';
+  $('#modalForm').innerHTML=`<div class="field"><label>邀請哪位既有成員</label><select id="inviteMember">${targets.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('')}</select></div><p class="field-hint">選擇已建立的成員，可保留他既有的分帳紀錄。</p><div class="form-actions"><button class="button button-primary" id="createSharedInvite" type="button">產生邀請連結</button></div>`;
+  $('#createSharedInvite').onclick=async()=>{const memberId=$('#inviteMember').value;const result=await cloudClient.from('travel_shared_invites').insert({trip_id:t.sharedId,owner_id:cloudUser.id,member_id:memberId}).select('code').single();if(result.error){toast('建立邀請失敗：請執行新版 Supabase SQL');return}const link=`${location.origin}${location.pathname}?join=${encodeURIComponent(result.data.code)}`;$('#modalForm').innerHTML=`<div class="field"><label>傳給 ${esc(t.members.find(m=>m.id===memberId)?.name||'朋友')} 的邀請連結</label><input id="sharedInviteLink" value="${esc(link)}" readonly></div><p class="field-hint">對方登入自己的帳號後，會自動加入此旅行並看到最新帳目。</p><div class="form-actions"><button class="button button-secondary" id="copySharedInvite" type="button">複製連結</button><button class="button button-primary" id="closeSharedInvite" type="button">完成</button></div>`;$('#copySharedInvite').onclick=async()=>{try{await navigator.clipboard.writeText(link)}catch{const input=$('#sharedInviteLink');input.select();document.execCommand('copy')}toast('邀請連結已複製')};$('#closeSharedInvite').onclick=closeModal};
+}
+let sharedJoinCode=new URLSearchParams(location.search).get('join');
+async function acceptSharedInvite(){
+  if(!sharedJoinCode||!cloudClient||!cloudUser)return;
+  const code=sharedJoinCode;sharedJoinCode=null;history.replaceState({},document.title,location.pathname+location.hash);
+  const result=await cloudClient.rpc('accept_shared_trip_invite',{p_code:code});
+  if(result.error){toast(result.error.message||'邀請連結無效');return}
+  await hydrateSharedTrips();toast('已加入共享旅行');
+}
+function activateSharedRealtime(){
+  if(!cloudClient||!cloudUser||sharedChannel)return;
+  sharedChannel=cloudClient.channel('shared-trips-'+cloudUser.id).on('postgres_changes',{event:'*',schema:'public',table:'travel_shared_trips'},()=>{clearTimeout(sharedTimer);setTimeout(hydrateSharedTrips,300)}).subscribe();
+  sharedPoll=setInterval(hydrateSharedTrips,15000);window.addEventListener('focus',hydrateSharedTrips);
+}
+const oldInviteControl=$('#inviteTrip');if(oldInviteControl){const freshInviteControl=oldInviteControl.cloneNode(true);oldInviteControl.replaceWith(freshInviteControl);freshInviteControl.addEventListener('click',openSharedInvite)}
+const oldDeleteControl=$('#deleteTrip');if(oldDeleteControl){const freshDeleteControl=oldDeleteControl.cloneNode(true);oldDeleteControl.replaceWith(freshDeleteControl);freshDeleteControl.addEventListener('click',async()=>{const t=activeTrip();if(!t||!isSharedOwner(t))return;if(!confirm('確定刪除「'+t.name+'」嗎？此旅行的支出與設定也會一併刪除。'))return;if(cloudUser&&t.sharedId){const result=await cloudClient.from('travel_shared_trips').delete().eq('id',t.sharedId);if(result.error){toast('旅行刪除失敗');return}}data.trips=data.trips.filter(x=>x.id!==t.id);data.activeTripId=data.trips[0]?.id||null;save();render();toast('旅行已刪除')})}
+const sharedCloudLogin=cloudLogin;
+cloudLogin=async()=>{await sharedCloudLogin();if(cloudUser){await loadSharedWorkspace();await acceptSharedInvite();activateSharedRealtime()}};
+const baseSharedInit=initCloud;
+initCloud=async()=>{await baseSharedInit();if(cloudUser){await loadSharedWorkspace();await acceptSharedInvite();activateSharedRealtime()}};
+initCloud();

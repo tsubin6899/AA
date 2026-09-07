@@ -144,3 +144,4 @@ body { background:linear-gradient(135deg,#fff5e8 0%,#edf7f1 48%,#f4efff 100%); }
 .summary-label .heading-icon { width:18px; height:18px; margin-right:5px; border-radius:5px; font-size:11px; vertical-align:-3px; }
 .dark-mode .heading-icon { background:linear-gradient(135deg,#514464,#334b51); }
 @media (max-width:700px) { .expense-list { grid-template-columns:1fr; }.expense-list .empty-list { grid-column:auto; } }
+.expense-date-separator { grid-column:1 / -1; display:flex; align-items:center; gap:9px; margin:10px 0 0; color:var(--violet); font-size:11px; font-weight:800; letter-spacing:.04em; }.expense-date-separator::after { content:''; height:1px; flex:1; background:rgba(117,103,200,.2); }.dark-mode .expense-date-separator { color:#d6cfff; }.dark-mode .expense-date-separator::after { background:#454866; }

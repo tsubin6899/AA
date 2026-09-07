@@ -218,3 +218,26 @@ do $$ begin
   alter publication supabase_realtime add table public.travel_shared_trips;
 exception when duplicate_object then null;
 end $$;
+
+-- 避免旅行與成員的 RLS 政策互相查詢而遞迴；此函式只用於權限判斷。
+create or replace function public.can_access_shared_trip(p_trip_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.travel_shared_trips t
+    where t.id = p_trip_id and t.owner_id = auth.uid()
+  ) or exists (
+    select 1 from public.travel_shared_trip_members m
+    where m.trip_id = p_trip_id and m.user_id = auth.uid()
+  );
+$$;
+
+drop policy if exists "shared trip members can read" on public.travel_shared_trips;
+create policy "shared trip members can read" on public.travel_shared_trips
+  for select to authenticated using (public.can_access_shared_trip(id));
+
+drop policy if exists "shared members can read their trip" on public.travel_shared_trip_members;
+
+revoke all on function public.can_access_shared_trip(uuid) from public;
+grant execute on function public.can_access_shared_trip(uuid) to authenticated;

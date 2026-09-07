@@ -179,7 +179,7 @@ async function createOrUpdateSharedTrip(t){
   if(!t.sharedId){
     const ownerMember=t.members.find(m=>m.id===data.ownerId)||t.members[0];
     const result=await cloudClient.rpc('create_shared_trip',{p_client_trip_id:t.id,p_payload:payload,p_owner_member_id:ownerMember?.id||data.ownerId});
-    if(result.error){toast('旅行雲端建立失敗：請執行新版 Supabase SQL');return null}
+    if(result.error){console.error('建立共享旅行失敗',result.error);toast('旅行雲端建立失敗：'+(result.error.message||'請執行新版 Supabase SQL'));return null}
     t.sharedId=result.data;t.sharedOwnerId=cloudUser.id;t.sharedUpdatedAt=null;t.sharedFingerprint=fingerprint;return t.sharedId;
   }
   if(t.sharedFingerprint===fingerprint)return t.sharedId;

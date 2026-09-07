@@ -123,7 +123,7 @@ function cloudStatus(text){const el=document.querySelector('.local-badge');if(el
 function updateAuthButton(){const b=$('#authButton');if(!b)return;b.textContent=cloudUser?'登出 '+(cloudUser.email||'帳號'):'登入同步';cloudStatus(cloudUser?'已連線雲端':'資料儲存在此裝置')}
 async function loadCloudWorkspace(){if(!cloudClient||!cloudUser)return;const {data:row,error}=await cloudClient.from('travel_workspaces').select('payload').eq('owner_id',cloudUser.id).maybeSingle();if(error){cloudStatus('雲端尚未設定');return}if(row?.payload?.trips){data=row.payload;normalize();localStorage.setItem(STORAGE_KEY,JSON.stringify(data));render();toast('已載入雲端資料')}else{await cloudClient.from('travel_workspaces').upsert({owner_id:cloudUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'owner_id'});toast('已建立雲端資料')}}
 function queueCloudSave(){if(!cloudClient||!cloudUser)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(async()=>{const result=await cloudClient.from('travel_workspaces').upsert({owner_id:cloudUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'owner_id'});if(result.error)cloudStatus('雲端同步失敗')},500)}
-async function cloudLogin(){if(!cloudClient)return toast('雲端服務尚未載入');const email=prompt('請輸入 Email');if(!email)return;const password=prompt('請輸入密碼（至少 6 碼）');if(!password)return;let result=await cloudClient.auth.signInWithPassword({email,password});if(result.error)result=await cloudClient.auth.signUp({email,password});if(result.error){toast('登入失敗：'+result.error.message);return}cloudUser=result.data.user;updateAuthButton();await loadCloudWorkspace();await redeemPendingInvite();toast('登入成功')}
+async function cloudLogin(){if(!cloudClient)return toast('雲端服務尚未載入');const email=prompt('請輸入 Email');if(!email)return;const password=prompt('請輸入密碼（至少 6 碼）');if(!password)return;let result=await cloudClient.auth.signInWithPassword({email,password});if(result.error){const signUp=await cloudClient.auth.signUp({email,password});if(signUp.error){toast('登入失敗：'+signUp.error.message);return}if(!signUp.data.session){cloudUser=null;updateAuthButton();toast('已寄出驗證信，請完成驗證後再重新登入');return}result=signUp}const session=result.data.session;if(!session?.user){cloudUser=null;updateAuthButton();toast('尚未取得登入憑證，請重新登入');return}cloudUser=session.user;updateAuthButton();await loadCloudWorkspace();await redeemPendingInvite();toast('登入成功')}
 async function initCloud(){if(!window.supabase?.createClient){cloudStatus('本機模式');return}cloudClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const session=await cloudClient.auth.getSession();cloudUser=session.data.session?.user||null;updateAuthButton();if(cloudUser)await loadCloudWorkspace();cloudClient.auth.onAuthStateChange((event,session)=>{cloudUser=session?.user||null;updateAuthButton()})}
 $('#authButton')?.addEventListener('click',async()=>{if(cloudUser){await cloudClient.auth.signOut();cloudUser=null;updateAuthButton();toast('已登出，改用本機資料')}else await cloudLogin()});initCloud();
 
@@ -174,7 +174,10 @@ function sharedFingerprint(t){return JSON.stringify(sharedTripPayload(t))}
 function isSharedOwner(t){return !cloudUser||!t.sharedOwnerId||t.sharedOwnerId===cloudUser.id}
 visibleTrips=()=>cloudUser?data.trips:legacyVisibleTrips();
 async function createOrUpdateSharedTrip(t){
-  if(!cloudClient||!cloudUser||!t)return null;
+  if(!cloudClient||!t)return null;
+  const {data:{session}}=await cloudClient.auth.getSession();
+  cloudUser=session?.user||null;updateAuthButton();
+  if(!session){toast('登入已過期，請重新登入後再建立邀請');return null}
   const payload=sharedTripPayload(t),fingerprint=JSON.stringify(payload);
   if(!t.sharedId){
     const ownerMember=t.members.find(m=>m.id===data.ownerId)||t.members[0];

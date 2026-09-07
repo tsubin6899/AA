@@ -257,13 +257,17 @@ async function openSharedInvite(){
   $('#modalForm').innerHTML=`<div class="field"><label>邀請哪位既有成員</label><select id="inviteMember">${targets.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('')}</select></div><p class="field-hint">選擇已建立的成員，可保留他既有的分帳紀錄。</p><div class="form-actions"><button class="button button-primary" id="createSharedInvite" type="button">產生邀請連結</button></div>`;
   $('#createSharedInvite').onclick=async()=>{const memberId=$('#inviteMember').value;const result=await cloudClient.from('travel_shared_invites').insert({trip_id:t.sharedId,owner_id:cloudUser.id,member_id:memberId}).select('code').single();if(result.error){toast('建立邀請失敗：請執行新版 Supabase SQL');return}const link=`${location.origin}${location.pathname}?join=${encodeURIComponent(result.data.code)}`;$('#modalForm').innerHTML=`<div class="field"><label>傳給 ${esc(t.members.find(m=>m.id===memberId)?.name||'朋友')} 的邀請連結</label><input id="sharedInviteLink" value="${esc(link)}" readonly></div><p class="field-hint">對方登入自己的帳號後，會自動加入此旅行並看到最新帳目。</p><div class="form-actions"><button class="button button-secondary" id="copySharedInvite" type="button">複製連結</button><button class="button button-primary" id="closeSharedInvite" type="button">完成</button></div>`;$('#copySharedInvite').onclick=async()=>{try{await navigator.clipboard.writeText(link)}catch{const input=$('#sharedInviteLink');input.select();document.execCommand('copy')}toast('邀請連結已複製')};$('#closeSharedInvite').onclick=closeModal};
 }
-let sharedJoinCode=new URLSearchParams(location.search).get('join');
+const SHARED_JOIN_STORAGE_KEY='travel-shared-join-code';
+const sharedJoinCodeFromLink=new URLSearchParams(location.search).get('join');
+if(sharedJoinCodeFromLink)localStorage.setItem(SHARED_JOIN_STORAGE_KEY,sharedJoinCodeFromLink);
+let sharedJoinCode=sharedJoinCodeFromLink||localStorage.getItem(SHARED_JOIN_STORAGE_KEY);
 async function acceptSharedInvite(){
-  if(!sharedJoinCode||!cloudClient||!cloudUser)return;
-  const code=sharedJoinCode;sharedJoinCode=null;history.replaceState({},document.title,location.pathname+location.hash);
+  if(!sharedJoinCode||!cloudClient||!cloudUser)return false;
+  const code=sharedJoinCode;
   const result=await cloudClient.rpc('accept_shared_trip_invite',{p_code:code});
-  if(result.error){toast(result.error.message||'邀請連結無效');return}
-  await hydrateSharedTrips();toast('已加入共享旅行');
+  if(result.error){localStorage.setItem(SHARED_JOIN_STORAGE_KEY,code);toast('無法加入邀請旅行：'+(result.error.message||'請重新開啟邀請連結'));return false}
+  sharedJoinCode=null;localStorage.removeItem(SHARED_JOIN_STORAGE_KEY);if(new URLSearchParams(location.search).has('join'))history.replaceState({},document.title,location.pathname+location.hash);
+  await hydrateSharedTrips();const joined=data.trips.find(t=>t.sharedId===result.data);if(joined)data.activeTripId=joined.id;localStorage.setItem(STORAGE_KEY,JSON.stringify(data));render();toast('已加入共享旅行：'+(joined?.name||''));return true;
 }
 function activateSharedRealtime(){
   if(!cloudClient||!cloudUser||sharedChannel)return;
@@ -273,7 +277,7 @@ function activateSharedRealtime(){
 const oldInviteControl=$('#inviteTrip');if(oldInviteControl){const freshInviteControl=oldInviteControl.cloneNode(true);oldInviteControl.replaceWith(freshInviteControl);freshInviteControl.addEventListener('click',openSharedInvite)}
 const oldDeleteControl=$('#deleteTrip');if(oldDeleteControl){const freshDeleteControl=oldDeleteControl.cloneNode(true);oldDeleteControl.replaceWith(freshDeleteControl);freshDeleteControl.addEventListener('click',async()=>{const t=activeTrip();if(!t||!isSharedOwner(t))return;if(!confirm('確定刪除「'+t.name+'」嗎？此旅行的支出與設定也會一併刪除。'))return;if(cloudUser&&t.sharedId){const result=await cloudClient.from('travel_shared_trips').delete().eq('id',t.sharedId);if(result.error){toast('旅行刪除失敗');return}}data.trips=data.trips.filter(x=>x.id!==t.id);data.activeTripId=data.trips[0]?.id||null;save();render();toast('旅行已刪除')})}
 const sharedCloudLogin=cloudLogin;
-cloudLogin=async()=>{await sharedCloudLogin();if(cloudUser){await loadSharedWorkspace();await acceptSharedInvite();activateSharedRealtime()}};
+cloudLogin=async()=>{await sharedCloudLogin();if(cloudUser){await acceptSharedInvite();await loadSharedWorkspace();activateSharedRealtime()}};
 const baseSharedInit=initCloud;
-initCloud=async()=>{await baseSharedInit();if(cloudUser){await loadSharedWorkspace();await acceptSharedInvite();activateSharedRealtime()}};
+initCloud=async()=>{await baseSharedInit();if(cloudUser){await acceptSharedInvite();await loadSharedWorkspace();activateSharedRealtime()}};
 initCloud();

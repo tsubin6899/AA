@@ -170,6 +170,9 @@ $('#inviteTrip')?.addEventListener('click',createTravelInvite);
 const originalInitCloud=initCloud;
 initCloud=async()=>{await originalInitCloud();if(cloudUser)await redeemPendingInvite()};
 initCloud();
+let pendingForeignFeeRounding=false;
+document.addEventListener('submit',e=>{if(e.target.id!=='modalForm'||modalMode!=='expense')return;const form=new FormData(e.target);pendingForeignFeeRounding=!editingId&&form.get('payment')==='國外刷卡'},true);
+document.addEventListener('submit',e=>{if(e.target.id!=='modalForm'||!pendingForeignFeeRounding)return;pendingForeignFeeRounding=false;setTimeout(()=>{const t=activeTrip(),feeIndex=t?.expenses.map(x=>x.payment).lastIndexOf('國外刷卡手續費');if(!t||feeIndex<1)return;const feeRecord=t.expenses[feeIndex],baseRecord=t.expenses[feeIndex-1],roundedFee=Math.round(Number(baseRecord.amount||0)*.015),roundedFeeTwd=roundedFee*Number(baseRecord.fxRate||1);feeRecord.amount=roundedFee;feeRecord.twdAmount=roundedFeeTwd;feeRecord.shares=Object.fromEntries(Object.entries(baseRecord.shares||{}).map(([id,value])=>[id,baseRecord.twdAmount?Number(value)*roundedFeeTwd/Number(baseRecord.twdAmount):0]));feeRecord.shareAmounts=Object.fromEntries(Object.entries(feeRecord.shares).map(([id,value])=>[id,Number(value)/(feeRecord.fxRate||1)]));save();render()},0)},false);
 
 // Shared trips: one cloud record per trip, protected by Supabase membership rules.
 // This replaces the old invite-copy flow while retaining each account's private backup.
